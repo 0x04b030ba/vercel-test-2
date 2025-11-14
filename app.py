@@ -1,13 +1,20 @@
 import discord
 from discord.ext import commands
-import os
 from flask import Flask
+import os
 
-# Initialize Flask app
+# Create Flask app to serve a status endpoint
 app = Flask(__name__)
 
 # Create a bot instance with the desired prefix "$"
 bot = commands.Bot(command_prefix='$', intents=discord.Intents.default())
+
+@app.route('/status')
+def bot_status():
+    if bot.is_ready():
+        return "Bot is online!"
+    else:
+        return "Bot is offline!", 503
 
 # Event: On bot ready
 @bot.event
@@ -20,12 +27,13 @@ async def ping(ctx):
     latency = round(bot.latency * 1000)  # Convert latency to ms
     await ctx.send(f'Pong! Latency is {latency}ms')
 
-# Create a simple route for Flask to check the bot status
-@app.route('/status')
-def bot_status():
-    return "Bot is running!"
+# Run the Flask app on a separate thread
+from threading import Thread
+def run_flask():
+    app.run(port=5000)
 
-# Run the Flask app to expose an endpoint for status check
-if __name__ == "__main__":
-    app.run(debug=True)
-    bot.run('MTQzODgyNDA0ODExMTkxNTA1OA.G_F6Th.eqlPen_uJ7otISZFLVTs8LhClwBt0xdvEUdbhQ')
+# Start Flask server in the background
+Thread(target=run_flask).start()
+
+# Run the bot
+bot.run('MTQzODgyNDA0ODExMTkxNTA1OA.G_F6Th.eqlPen_uJ7otISZFLVTs8LhClwBt0xdvEUdbhQ')
